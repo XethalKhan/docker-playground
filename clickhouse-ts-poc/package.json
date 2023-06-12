@@ -1,0 +1,26 @@
+{
+  "name": "clickhouse-ts-poc",
+  "version": "1.0.0",
+  "description": "ClickHouse connection using TypeScript proof of concept",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [
+    "clickhouse",
+    "ch",
+    "typescript",
+    "ts"
+  ],
+  "author": "Petar Bojovic",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.2.3",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^0.0.16"
+  }
+}

@@ -1,0 +1,70 @@
+version: "3.8"
+services:
+  portainer:
+    image: portainer/portainer-ce
+    restart: always
+    container_name: "portainer"
+    hostname: "portainer"
+    environment:
+      - TZ=Europe/Belgrade
+    ports:
+      - 900:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.container/portainer/data:/data
+    command: --admin-password '$$2y$$05$$Qi6m6B2gLVNPgg86mTGBTucNWbVYyMbevYszs/vLWQpAkeuc26DHa'
+  clickhouse:
+    image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION-23.2-alpine}"
+    container_name: "clickhouse"
+    hostname: "clickhouse"
+    depends_on:
+      - kafka
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    restart: always
+    environment:
+      - TZ=Europe/Belgrade
+    volumes:
+      - "./.docker/clickhouse/config.xml:/etc/clickhouse-server/config.xml"
+      - "./.docker/clickhouse/users.xml:/etc/clickhouse-server/users.xml"
+      - "./.docker/clickhouse/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d"
+      - "./.container/clickhouse:/var/lib/clickhouse/"
+  tabix:
+    image: spoonest/clickhouse-tabix-web-client
+    container_name: "tabix"
+    depends_on:
+      - clickhouse
+    hostname: tabix
+    restart: always
+    environment:
+      - TZ=Europe/Belgrade
+      - CH_NAME=kafka
+      - CH_HOST=localhost:8123
+      - CH_LOGIN=default
+      - CH_PASSWORD=
+    ports:
+      - "8888:80"
+  kafka:
+    image: "bitnami/kafka:latest"
+    container_name: "kafka"
+    hostname: "kafka"
+    ports:
+      - "9092:9092"
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - ./.container/kafka:/bitnami/kafka
+  kafka-topic-init:
+    image: "bitnami/kafka:latest"
+    container_name: "kafka-topic-init"
+    hostname: "kafka-topic-init"
+    depends_on:
+      - clickhouse
+      - kafka
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - ./.docker/kafka-topic-init:/app
+    entrypoint: ["/bin/sh", "init.sh"]
+    working_dir: /app

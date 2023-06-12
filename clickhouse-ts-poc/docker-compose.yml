@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  portainer:
+    image: portainer/portainer-ce
+    restart: always
+    container_name: 'portainer'
+    hostname: 'portainer'
+    environment:
+      - TZ=Europe/Belgrade
+    ports:
+      - 900:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --admin-password '$$2y$$05$$5vvv5uQzQdImAXA1YQrjVONKi1xgE.Y2uVz0yKbPHPpntaDLXa2ki'
+  clickhouse:
+    image: 'clickhouse/clickhouse-server:${CLICKHOUSE_VERSION-23.2-alpine}'
+    container_name: 'clickhouse'
+    hostname: 'clickhouse'
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    restart: always
+    environment:
+      - TZ=Europe/Belgrade
+    volumes:
+      - './.docker/clickhouse/config.xml:/etc/clickhouse-server/config.xml'
+      - './.docker/clickhouse/users.xml:/etc/clickhouse-server/users.xml'
+      - './.docker/clickhouse/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d'
+      - './.container/clickhouse:/var/lib/clickhouse/'
+  tabix:
+    image: spoonest/clickhouse-tabix-web-client
+    container_name: 'tabix'
+    depends_on:
+      - 'clickhouse'
+    hostname: 'tabix'
+    restart: always
+    environment:
+      - TZ=Europe/Belgrade
+      - CH_NAME=restaurants
+      - CH_HOST=localhost:8123
+      - CH_LOGIN=default
+      - CH_PASSWORD=
+    ports:
+      - '8888:80'
